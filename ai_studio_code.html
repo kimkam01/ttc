@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>經典文言文字義大挑戰</title>
+    <style>
+        :root {
+            --primary: #1e4b61; /* 深邃靛藍 */
+            --bg: #f2f5f7; /* 淺灰藍背景 */
+            --text: #333;
+            --btn-hover: #143647;
+            --accent: #a63a43; /* 絳紅 */
+        }
+        body {
+            font-family: "Microsoft JhengHei", "PingFang TC", serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #game-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 750px; /* 加寬一點容納選單 */
+            padding: 35px;
+            text-align: center;
+            border-top: 8px solid var(--primary);
+            position: relative;
+        }
+        h1 { color: var(--primary); margin-bottom: 5px; font-size: 28px;}
+        .subtitle { color: #666; margin-bottom: 25px; font-size: 15px; font-weight: bold;}
+        
+        /* 首頁選單網格排版 */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        /* 標題分類 */
+        .category-title {
+            grid-column: span 2;
+            text-align: left;
+            font-size: 16px;
+            color: var(--accent);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: 0.2s;
+            width: 100%;
+        }
+        button:hover { background-color: var(--btn-hover); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.15);}
+        .btn-full { grid-column: span 2; background-color: var(--accent); padding: 16px; font-size: 18px;}
+        .btn-full:hover { background-color: #8c2e36; }
+        
+        .hidden { display: none !important; }
+        
+        /* 遊戲畫面專用 */
+        .info-bar { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 20px; color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 18px;}
+        .quote-box { background: #fdfaf3; padding: 25px; border-radius: 10px; border-left: 6px solid var(--accent); margin: 20px 0; font-size: 22px; letter-spacing: 2px; font-weight: bold; color: #444; line-height: 1.5;}
+        .word-highlight { color: var(--accent); font-size: 1.3em; border-bottom: 3px dashed var(--accent); padding: 0 4px;}
+        
+        /* 選擇題與填空題 */
+        #mcq-container button { width: 100%; text-align: left; padding: 18px; margin: 6px 0; background-color: #f4f6f7; color: #333; font-weight: bold; border: 2px solid transparent; font-size: 18px;}
+        #mcq-container button:hover { background-color: #e6ebed; border-color: var(--primary); color: var(--primary);}
+        
+        input[type="text"] { width: 85%; padding: 18px; font-size: 20px; border: 2px solid #ccc; border-radius: 8px; margin-bottom: 15px; text-align: center; font-weight: bold;}
+        input[type="text"]:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 8px rgba(43, 92, 115, 0.3);}
+        
+        #feedback { font-size: 20px; font-weight: bold; margin-top: 20px; min-height: 50px; transition: 0.3s; line-height: 1.6;}
+        .correct { color: #28a745; }
+        .wrong { color: #dc3545; }
+        
+        /* 計時器條 */
+        #timer-bar { height: 10px; background-color: #eee; border-radius: 5px; overflow: hidden; margin-top: 15px; }
+        #timer-fill { height: 100%; background-color: #28a745; width: 100%; transition: width 0.1s linear, background-color 0.3s; }
+        
+        /* 錯題本 */
+        #mistakes-log { text-align: left; background: #fff3cd; padding: 20px; border-radius: 10px; font-size: 16px; margin-top: 25px; color: #856404; display: none; line-height: 1.8; border: 1px solid #ffeeba;}
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- 1. 首頁選擇篇章 -->
+    <div id="screen-home">
+        <h1>📜 經典文言大挑戰</h1>
+        <p class="subtitle">【DSE/高中核心滿載版】收錄全注釋題庫 (共163題)</p>
+        
+        <div class="menu-grid">
+            <div class="category-title">📖 先秦諸子與史傳</div>
+            <button onclick="selectChapter('1')">論語【論仁】 (15題)</button>
+            <button onclick="selectChapter('2')">論語【論孝】 (11題)</button>
+            <button onclick="selectChapter('3')">論語【論君子】 (19題)</button>
+            <button onclick="selectChapter('4')">荀子【勸學】 (22題)</button>
+            <button onclick="selectChapter('5')">莊子【逍遙遊】 (22題)</button>
+            <button onclick="selectChapter('11')">史記【廉頗藺相如】 (25題)</button>
+            
+            <div class="category-title">🏮 唐宋詩詞</div>
+            <button onclick="selectChapter('6')">杜甫【登樓】 (6題)</button>
+            <button onclick="selectChapter('7')">李白【月下獨酌】 (14題)</button>
+            <button onclick="selectChapter('8')">李清照【聲聲慢】 (7題)</button>
+            <button onclick="selectChapter('9')">蘇軾【念奴嬌】 (9題)</button>
+            <button onclick="selectChapter('10')" style="grid-column: span 2;">辛棄疾【青玉案·元夕】 (13題)</button>
+            
+            <button class="btn-full" onclick="selectChapter('ALL')">🔥 綜合終極全測 (隨機抽考10題) 🔥</button>
+        </div>
+    </div>
+
+    <!-- 2. 選擇難度模式 -->
+    <div id="screen-mode" class="hidden">
+        <h1 id="selected-chapter-title"></h1>
+        <h3 style="margin-top: 30px;">請選擇測驗難度：</h3>
+        <button onclick="startGame('mcq')" style="padding: 20px;">🌟 書僮模式 (三選一)<br><span style="font-size:14px; font-weight:normal;">(答對基本分 3 分)</span></button><br>
+        <button onclick="startGame('fill')" style="padding: 20px;">🔥 大師模式 (填空題)<br><span style="font-size:14px; font-weight:normal;">(答對基本分 5 分)</span></button>
+        
+        <p style="color:var(--accent); margin-top: 25px; font-size: 15px; font-weight:bold;">⚡ 速度加成：3秒內作答 +2分！6秒內作答 +1分！</p>
+        <button onclick="showScreen('screen-home')" style="background-color: #ddd; color: #555; margin-top: 20px; width: 60%;">返回上一步</button>
+    </div>
+
+    <!-- 3. 遊戲進行中 -->
+    <div id="screen-game" class="hidden">
+        <div class="info-bar">
+            <span id="ui-question-num">第 1 題</span>
+            <span id="ui-score">分數：0</span>
+        </div>
+        
+        <div id="timer-bar"><div id="timer-fill"></div></div>
+        
+        <div class="quote-box">
+            <span id="ui-quote"></span>
+        </div>
+        <p style="font-size: 20px; font-weight:bold;">請問「<span id="ui-word" class="word-highlight"></span>」的注釋為何？</p>
+
+        <!-- 選擇題區塊 -->
+        <div id="mcq-container" class="hidden"></div>
+
+        <!-- 填空題區塊 -->
+        <div id="fill-container" class="hidden">
+            <input type="text" id="ui-fill-input" placeholder="請輸入注釋..." onkeypress="handleEnter(event)" autocomplete="off">
+            <br>
+            <button onclick="checkFillAnswer()" style="width: 85%;">送出答案 (Enter)</button>
+        </div>
+
+        <div id="feedback"></div>
+    </div>
+
+    <!-- 4. 遊戲結果 -->
+    <div id="screen-result" class="hidden">
+        <h1>🎉 測驗結束 🎉</h1>
+        <h2 id="final-score" style="font-size: 45px; color: var(--accent); margin: 15px 0;"></h2>
+        <h3 id="final-rank" style="color: #444; font-size: 22px;"></h3>
+        <div id="mistakes-log"></div>
+        <button class="btn-full" onclick="location.reload()" style="margin-top: 30px; font-size: 20px; padding: 15px;">回主選單 🔄</button>
+    </div>
+</div>
+
+<script>
+    // --- 終極大題庫 (共163題) ---
+    const GAME_DATA = {
+        "1": { name: "論語：論仁", questions: [
+            { quote: "不可以久處約", word: "約", answers: ["窮困", "貧困"] },
+            { quote: "知者利仁", word: "知", answers: ["聰明", "通智", "智"] },
+            { quote: "知者利仁", word: "利", answers: ["利用"] },
+            { quote: "不處也", word: "處", answers: ["接受"] },
+            { quote: "不去也", word: "去", answers: ["捨棄"] },
+            { quote: "惡乎成名", word: "惡", answers: ["怎麼", "如何", "疑問代詞"] },
+            { quote: "無終食之間違仁", word: "終食之間", answers: ["一頓飯的時間", "很短的時間"] },
+            { quote: "無終食之間違仁", word: "違", answers: ["離開", "違背"] },
+            { quote: "造次必於是", word: "造次", answers: ["倉卒匆忙", "倉促"] },
+            { quote: "顛沛必於是", word: "顛沛", answers: ["困頓挫折", "挫折"] },
+            { quote: "顏淵問仁", word: "顏淵", answers: ["孔子學生", "名回", "字子淵"] },
+            { quote: "克己復禮為仁", word: "復", answers: ["回復", "回歸"] },
+            { quote: "請問其目", word: "其", answers: ["它的", "指為仁的"] },
+            { quote: "請問其目", word: "目", answers: ["綱目", "要目", "項目"] },
+            { quote: "請事斯語矣", word: "事", answers: ["實踐"] }
+        ]},
+        "2": { name: "論語：論孝", questions: [
+            { quote: "孟懿子問孝", word: "孟懿子", answers: ["魯國的大夫", "孟孫"] },
+            { quote: "無違", word: "無違", answers: ["不要違背禮節", "不違背禮節"] },
+            { quote: "樊遲御", word: "御", answers: ["驅車", "替孔子驅車", "駕車"] },
+            { quote: "生，事之以禮", word: "事", answers: ["侍奉", "服侍"] },
+            { quote: "子游問孝", word: "子游", answers: ["孔子學生", "言偃"] },
+            { quote: "是謂能養", word: "養", answers: ["供養"] },
+            { quote: "皆能有養", word: "養", answers: ["飼養"] },
+            { quote: "事父母幾諫", word: "幾", answers: ["輕微", "婉轉"] },
+            { quote: "又敬不違", word: "違", answers: ["觸忤", "冒犯", "違反"] },
+            { quote: "勞而不怨", word: "勞", answers: ["擔憂"] },
+            { quote: "一則以懼", word: "懼", answers: ["憂懼", "害怕", "擔憂"] }
+        ]},
+        "3": { name: "論語：論君子", questions: [
+            { quote: "君子不重則不威", word: "重", answers: ["莊重"] },
+            { quote: "學則不固", word: "固", answers: ["鞏固", "牢固", "固陋", "閉塞淺陋"] },
+            { quote: "主忠信", word: "主", answers: ["為主", "以忠和信兩種道德為主"] },
+            { quote: "過則勿憚改", word: "過", answers: ["過錯", "過失"] },
+            { quote: "過則勿憚改", word: "憚", answers: ["害怕", "畏懼"] },
+            { quote: "君子坦蕩蕩", word: "坦蕩蕩", answers: ["心胸舒坦寬廣", "舒坦寬廣", "心胸寬廣"] },
+            { quote: "小人長戚戚", word: "戚戚", answers: ["局促憂愁", "憂愁", "經常憂愁"] },
+            { quote: "司馬牛問君子", word: "司馬牛", answers: ["孔子學生", "名耕", "字子牛"] },
+            { quote: "斯謂之君子已乎", word: "斯", answers: ["這樣", "這"] },
+            { quote: "內省不疚", word: "內省不疚", answers: ["自己問心無愧", "問心無愧"] },
+            { quote: "君子成人之美", word: "美", answers: ["好事"] },
+            { quote: "不成人之惡", word: "惡", answers: ["壞事"] },
+            { quote: "小人反是", word: "反是", answers: ["和這個相反", "相反"] },
+            { quote: "君子恥其言", word: "恥", answers: ["感到羞恥", "羞恥"] },
+            { quote: "而過其行", word: "行", answers: ["行為", "行事", "行動"] },
+            { quote: "君子義以為質", word: "質", answers: ["本質", "基礎"] },
+            { quote: "孫以出之", word: "孫", answers: ["通遜", "謙遜"] },
+            { quote: "君子病無能焉", word: "病", answers: ["憂慮", "擔心", "慚愧", "抱怨"] },
+            { quote: "君子求諸己", word: "諸", answers: ["之於"] }
+        ]},
+        "4": { name: "荀子《勸學》", questions: [
+            { quote: "學不可以已", word: "已", answers: ["終止", "放棄", "終止、放棄"] },
+            { quote: "木直中繩", word: "中", answers: ["符合", "合於"] },
+            { quote: "輮以為輪", word: "輮", answers: ["通揉", "屈曲", "使它彎曲"] },
+            { quote: "雖有槁暴", word: "槁", answers: ["枯乾"] },
+            { quote: "雖有槁暴", word: "暴", answers: ["通曝", "曬乾"] },
+            { quote: "不復挺者", word: "挺", answers: ["筆直", "回復筆直的樣子"] },
+            { quote: "金就礪則利", word: "就", answers: ["接受", "靠近"] },
+            { quote: "金就礪則利", word: "礪", answers: ["磨刀石"] },
+            { quote: "日參省乎己", word: "參省", answers: ["檢討反省", "檢視省察"] },
+            { quote: "不如須臾之所學", word: "須臾", answers: ["片刻", "極短的時間"] },
+            { quote: "吾嘗跂而望矣", word: "跂", answers: ["踮起腳跟"] },
+            { quote: "聲非加疾也", word: "疾", answers: ["猛烈", "聲音宏亮", "宏亮"] },
+            { quote: "假舟楫者", word: "假", answers: ["假借", "憑藉", "利用"] },
+            { quote: "假舟楫者", word: "楫", answers: ["船槳", "船", "借代為船"] },
+            { quote: "而絕江河", word: "絕", answers: ["渡過", "橫渡"] },
+            { quote: "君子生非異也", word: "生", answers: ["通性", "天賦", "本性"] },
+            { quote: "故不積跬步", word: "跬", answers: ["半步"] },
+            { quote: "騏驥一躍", word: "騏驥", answers: ["駿馬"] },
+            { quote: "駑馬十駕", word: "駑馬", answers: ["劣馬", "質素低劣的馬"] },
+            { quote: "鍥而不舍", word: "鍥", answers: ["雕刻"] },
+            { quote: "金石可鏤", word: "鏤", answers: ["雕刻"] },
+            { quote: "用心躁也", word: "躁", answers: ["浮躁", "不專心"] }
+        ]},
+        "5": { name: "莊子《逍遙遊》", questions: [
+            { quote: "魏王貽我大瓠之種", word: "貽", answers: ["贈送"] },
+            { quote: "魏王貽我大瓠之種", word: "瓠", answers: ["葫蘆", "葫蘆瓜"] },
+            { quote: "其堅不能自舉也", word: "舉", answers: ["擎", "拿起"] },
+            { quote: "剖之以為瓢", word: "剖", answers: ["破開", "中分"] },
+            { quote: "則瓠落無所容", word: "瓠落", answers: ["同廓落", "大", "空廓的樣子"] },
+            { quote: "非不呺然大也", word: "呺然", answers: ["虛空而巨大的樣子"] },
+            { quote: "吾為其無用而掊之", word: "掊", answers: ["擊破", "打破"] },
+            { quote: "夫子固拙於用大矣", word: "拙", answers: ["不善於", "笨拙"] },
+            { quote: "有善為不龜手之藥者", word: "龜", answers: ["通皸", "皮膚受凍裂開"] },
+            { quote: "世世以洴澼絖為事", word: "洴澼", answers: ["漂洗"] },
+            { quote: "今一朝而鬻技百金", word: "鬻", answers: ["賣", "售賣"] },
+            { quote: "客得之，以說吳王", word: "說", answers: ["遊說"] },
+            { quote: "吳王使之將", word: "將", answers: ["領兵", "帶兵"] },
+            { quote: "能不龜手一也", word: "一", answers: ["同樣", "同一", "一樣"] },
+            { quote: "人謂之樗", word: "樗", answers: ["落葉喬木", "木材皮粗質劣"] },
+            { quote: "其大本擁腫", word: "擁", answers: ["通臃", "臃腫"] },
+            { quote: "不辟高下", word: "辟", answers: ["通避", "避開", "躲避"] },
+            { quote: "中於機辟", word: "機辟", answers: ["捕捉鳥獸的工具", "捕獸器"] },
+            { quote: "死於罔罟", word: "罔罟", answers: ["漁獵的網具", "網具", "魚網"] },
+            { quote: "何不樹之於無何有之鄉", word: "樹", answers: ["種植", "栽種"] },
+            { quote: "廣莫之野", word: "廣莫", answers: ["遼闊廣大的曠野", "遼闊空曠"] },
+            { quote: "不夭斤斧", word: "夭", answers: ["摧折", "折斷"] }
+        ]},
+        "6": { name: "杜甫《登樓》", questions: [
+            { quote: "錦江春色來天地", word: "錦江", answers: ["岷江的支流", "岷江支流"] },
+            { quote: "玉壘浮雲變古今", word: "玉壘", answers: ["山名", "玉壘山"] },
+            { quote: "北極朝廷終不改", word: "北極", answers: ["北極星", "比喻北方的朝廷"] },
+            { quote: "西山寇盜莫相侵", word: "西山寇盜", answers: ["指吐蕃", "吐蕃"] },
+            { quote: "可憐後主還祠廟", word: "後主", answers: ["三國時期蜀漢的後主劉禪", "劉禪"] },
+            { quote: "日暮聊為梁甫吟", word: "梁甫吟", answers: ["諸葛亮在隆中躬耕時愛吟唱的歌謠", "梁父吟"] }
+        ]},
+        "7": { name: "李白《月下獨酌》", questions: [
+            { quote: "獨酌無相親", word: "相親", answers: ["互相親愛", "親近", "可相親近的人"] },
+            { quote: "對影成三人", word: "三人", answers: ["指李白、月和李白的影子", "李白、月和影子"] },
+            { quote: "影徒隨我身", word: "徒", answers: ["徒然", "空", "徒然、空"] },
+            { quote: "暫伴月將影", word: "將", answers: ["和", "共", "和、共"] },
+            { quote: "行樂須及春", word: "及春", answers: ["趁着春天", "趁著春天"] },
+            { quote: "行樂須及春", word: "及", answers: ["趁着", "趁著", "趁"] },
+            { quote: "我歌月徘徊", word: "徘徊", answers: ["往返迴旋", "來回走動"] },
+            { quote: "我舞影零亂", word: "舞", answers: ["跳舞", "跳舞的動作"] },
+            { quote: "醒時同交歡", word: "交歡", answers: ["一同歡樂", "一起歡樂"] },
+            { quote: "醉後各分散", word: "分散", answers: ["離散", "別離"] },
+            { quote: "永結無情遊", word: "無情", answers: ["忘情", "泯除是非得失", "泯除物我之別"] },
+            { quote: "相期邈雲漢", word: "相期", answers: ["相約"] },
+            { quote: "相期邈雲漢", word: "邈", answers: ["遙遠"] },
+            { quote: "相期邈雲漢", word: "雲漢", answers: ["銀漢", "銀河"] }
+        ]},
+        "8": { name: "李清照《聲聲慢》", questions: [
+            { quote: "乍煖還寒時候", word: "乍煖還寒", answers: ["剛剛還很暖和，很快又變冷", "深秋天氣變化無常"] },
+            { quote: "乍煖還寒時候", word: "煖", answers: ["同暖", "暖"] },
+            { quote: "最難將息", word: "將息", answers: ["調養", "休息", "調養、休息"] },
+            { quote: "晚來風急", word: "晚來風急", answers: ["一作曉來風急", "曉來風急", "晚來風力"] },
+            { quote: "憔悴損", word: "憔悴損", answers: ["指黃花凋謝枯萎", "黃花凋謝枯萎", "凋謝枯萎"] },
+            { quote: "這次第", word: "次第", answers: ["光景", "情形", "光景、情形"] },
+            { quote: "怎一箇愁字了得", word: "了得", answers: ["概括得了", "概括"] }
+        ]},
+        "9": { name: "蘇軾《念奴嬌》", questions: [
+            { quote: "故壘西邊", word: "故壘", answers: ["舊的營壘", "舊營壘"] },
+            { quote: "羽扇綸巾", word: "綸巾", answers: ["用絲帶製成的頭巾", "絲帶製成的頭巾", "頭巾"] },
+            { quote: "羽扇綸巾", word: "羽扇", answers: ["用羽毛製成的扇", "羽毛製成的扇"] },
+            { quote: "檣櫓灰飛煙滅", word: "檣櫓", answers: ["借代戰船", "戰船", "船的桅杆和船槳"] },
+            { quote: "故國神遊", word: "故國", answers: ["當日的赤壁戰場", "赤壁戰場"] },
+            { quote: "早生華髮", word: "華髮", answers: ["半白的頭髮", "白髮"] },
+            { quote: "早生華髮", word: "華", answers: ["通花", "花"] },
+            { quote: "一尊還酹江月", word: "尊", answers: ["通樽", "樽", "借指酒", "酒"] },
+            { quote: "一尊還酹江月", word: "酹", answers: ["把酒灑在地上表示祭奠", "祭奠", "灑酒祭奠"] }
+        ]},
+        "10": { name: "辛棄疾《青玉案》", questions: [
+            { quote: "青玉案", word: "青玉案", answers: ["用來放置食物的短足托盤", "詞牌名", "短足托盤"] },
+            { quote: "元夕", word: "元夕", answers: ["上元節", "元宵", "農曆正月十五日"] },
+            { quote: "東風夜放花千樹", word: "花千樹", answers: ["花燈多如千樹開花", "無數花燈"] },
+            { quote: "更吹落、星如雨", word: "星如雨", answers: ["指煙花如雨般落下", "煙花如雨般落下"] },
+            { quote: "寶馬雕車香滿路", word: "寶馬", answers: ["名貴的駿馬", "駿馬"] },
+            { quote: "寶馬雕車香滿路", word: "雕車", answers: ["飾有雕花彩繪的車", "裝飾華麗的車"] },
+            { quote: "玉壺光轉", word: "玉壺", answers: ["喻明月", "明月", "指漏壺", "計時器"] },
+            { quote: "玉壺光轉", word: "光轉", answers: ["月光照射的位置轉變", "意指時間推移", "時間推移"] },
+            { quote: "一夜魚龍舞", word: "魚龍舞", answers: ["指舞動魚形龍形的彩燈", "魚形龍形的彩燈"] },
+            { quote: "蛾兒雪柳黃金縷", word: "蛾兒雪柳", answers: ["路上的女子穿戴着各種頭飾", "各種頭飾", "頭飾"] },
+            { quote: "笑語盈盈暗香去", word: "盈盈", answers: ["儀態美好", "微笑含情的樣子"] },
+            { quote: "眾裏尋他千百度", word: "度", answers: ["次", "回", "次、回"] },
+            { quote: "驀然迴首", word: "驀然", answers: ["突然", "忽然", "突然、忽然"] },
+            { quote: "燈火闌珊處", word: "闌珊", answers: ["暗淡", "零落", "暗淡、零落"] }
+        ]},
+        "11": { name: "司馬遷《廉頗藺相如列傳》", questions: [
+            { quote: "廉頗為趙將", word: "為", answers: ["做", "作為"] },
+            { quote: "使人遺趙王書", word: "遺", answers: ["給予", "送", "給予、送"] },
+            { quote: "徒見欺", word: "見", answers: ["被", "受", "表示被動的意思", "被動"] },
+            { quote: "求人可使報秦者", word: "使", answers: ["出使", "出使秦國"] },
+            { quote: "竊計欲亡走燕", word: "亡", answers: ["逃亡", "逃走"] },
+            { quote: "臣語曰", word: "語", answers: ["告訴", "告訴他"] },
+            { quote: "曲在趙", word: "曲", answers: ["理虧", "不是"] },
+            { quote: "均之二策", word: "均", answers: ["衡量", "比較"] },
+            { quote: "負其彊", word: "負", answers: ["倚仗", "恃着", "依靠"] },
+            { quote: "逆彊秦之驩", word: "逆", answers: ["拂逆", "違背"] },
+            { quote: "禮節甚倨", word: "倨", answers: ["傲慢", "驕傲"] },
+            { quote: "相如持其璧睨柱", word: "睨", answers: ["斜視", "斜眼看"] },
+            { quote: "相如度秦王特以詐佯為予趙城", word: "佯", answers: ["假裝", "裝作"] },
+            { quote: "乃使其從者衣褐", word: "衣", answers: ["穿着", "穿", "作動詞用"] },
+            { quote: "間至趙矣", word: "間", answers: ["從偏僻的小路", "間道", "偷偷地"] },
+            { quote: "唯大王與羣臣孰計議之", word: "孰", answers: ["通熟", "詳細", "仔細"] },
+            { quote: "左右皆靡", word: "靡", answers: ["倒下", "退卻"] },
+            { quote: "於是秦王不懌", word: "懌", answers: ["高興", "喜悅"] },
+            { quote: "請以趙十五城為秦王壽", word: "壽", answers: ["祝壽", "作動詞用"] },
+            { quote: "且相如素賤人", word: "素", answers: ["向來", "本來", "一向"] },
+            { quote: "臣所以去親戚而事君者", word: "去", answers: ["離開", "遠離"] },
+            { quote: "公之視廉將軍孰與秦王", word: "孰與", answers: ["比對方怎麼樣", "與...相比", "用於比照"] },
+            { quote: "相如雖駑", word: "駑", answers: ["劣馬", "喻愚鈍無能", "愚鈍無能"] },
+            { quote: "顧吾念之", word: "顧", answers: ["只是", "不過", "表示轉折"] },
+            { quote: "為刎頸之交", word: "刎頸之交", answers: ["誓同生死的朋友", "同生共死的朋友"] }
+        ]}
+    };
+
+    // 建立選擇題用的干擾選項庫
+    let allPossibleAnswers = [];
+    Object.values(GAME_DATA).forEach(cat => {
+        cat.questions.forEach(q => allPossibleAnswers.push(q.answers[0]));
+    });
+    allPossibleAnswers = [...new Set(allPossibleAnswers)]; 
+
+    // --- 遊戲狀態變數 ---
+    let selectedQuestions = [];
+    let currentQIndex = 0;
+    let score = 0;
+    let mode = 'mcq';
+    let baseScore = 3;
+    let maxQuestions = 10; 
+    let currentStartTime = 0;
+    let timerInterval = null;
+    let isAnswering = false;
+    let mistakes = [];
+
+    // --- 介面切換 ---
+    function showScreen(screenId) {
+        document.querySelectorAll('#game-container > div').forEach(div => div.classList.add('hidden'));
+        document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    // --- 流程控制 ---
+    function selectChapter(chapId) {
+        selectedQuestions = [];
+        let title = "";
+        if(chapId === 'ALL') {
+            title = "綜合終極全測 (隨機抽考)";
+            Object.values(GAME_DATA).forEach(cat => selectedQuestions = selectedQuestions.concat(cat.questions));
+        } else {
+            title = "單元：" + GAME_DATA[chapId].name;
+            selectedQuestions = [...GAME_DATA[chapId].questions];
+        }
+        document.getElementById('selected-chapter-title').innerText = title;
+        // 打亂題目順序
+        selectedQuestions.sort(() => Math.random() - 0.5);
+        showScreen('screen-mode');
+    }
+
+    function startGame(selectedMode) {
+        mode = selectedMode;
+        baseScore = mode === 'mcq' ? 3 : 5;
+        score = 0;
+        currentQIndex = 0;
+        mistakes = [];
+        // 每次玩最多測驗 10 題
+        maxQuestions = Math.min(10, selectedQuestions.length); 
+        
+        showScreen('screen-game');
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        if(currentQIndex >= maxQuestions) {
+            endGame();
+            return;
+        }
+
+        isAnswering = false;
+        let q = selectedQuestions[currentQIndex];
+        
+        document.getElementById('ui-question-num').innerText = `第 ${currentQIndex + 1} / ${maxQuestions} 題`;
+        document.getElementById('ui-score').innerText = `目前總分：${score}`;
+        
+        // 將原句中的考核字用高亮標示
+        let highlightedQuote = q.quote.replace(new RegExp(q.word, 'g'), `<span class="word-highlight">${q.word}</span>`);
+        document.getElementById('ui-quote').innerHTML = highlightedQuote;
+        
+        document.getElementById('ui-word').innerText = q.word;
+        document.getElementById('feedback').innerText = "";
+        
+        document.getElementById('mcq-container').classList.add('hidden');
+        document.getElementById('fill-container').classList.add('hidden');
+
+        if(mode === 'mcq') {
+            setupMCQ(q);
+        } else {
+            setupFill(q);
+        }
+
+        startTimer();
+    }
+
+    function setupMCQ(q) {
+        let container = document.getElementById('mcq-container');
+        container.innerHTML = "";
+        container.classList.remove('hidden');
+
+        let options = [q.answers[0]]; // 第一順位正確選項
+        while(options.length < 3) {
+            let randAns = allPossibleAnswers[Math.floor(Math.random() * allPossibleAnswers.length)];
+            // 確保干擾選項沒有重複，且不是另一個容錯答案
+            if(!options.includes(randAns) && !q.answers.includes(randAns)) {
+                options.push(randAns);
+            }
+        }
+        options.sort(() => Math.random() - 0.5); 
+
+        options.forEach((opt, index) => {
+            let btn = document.createElement('button');
+            btn.innerText = `${['(A)', '(B)', '(C)'][index]} ${opt}`;
+            btn.onclick = () => processAnswer(opt === q.answers[0], opt, q.answers[0]);
+            container.appendChild(btn);
+        });
+    }
+
+    function setupFill(q) {
+        let container = document.getElementById('fill-container');
+        container.classList.remove('hidden');
+        let input = document.getElementById('ui-fill-input');
+        input.value = "";
+        input.focus();
+    }
+
+    function handleEnter(e) {
+        if(e.key === 'Enter') checkFillAnswer();
+    }
+
+    function checkFillAnswer() {
+        if(isAnswering) return;
+        let userInput = document.getElementById('ui-fill-input').value.trim();
+        if(userInput === "") return;
+        
+        let q = selectedQuestions[currentQIndex];
+        // 模糊判斷：輸入字串包含在正確答案中，或完全相等
+        let isCorrect = q.answers.some(ans => userInput === ans || (userInput.length > 0 && ans.includes(userInput)));
+        processAnswer(isCorrect, userInput, q.answers[0]);
+    }
+
+    // --- 計時與給分 ---
+    function startTimer() {
+        currentStartTime = Date.now();
+        let fill = document.getElementById('timer-fill');
+        fill.style.width = '100%';
+        fill.style.backgroundColor = '#28a745';
+        
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if(isAnswering) return;
+            let elapsed = (Date.now() - currentStartTime) / 1000;
+            let percent = Math.max(0, 100 - (elapsed / 10 * 100)); // 10秒基準
+            fill.style.width = percent + '%';
+            
+            if(elapsed > 3 && elapsed <= 6) fill.style.backgroundColor = '#ffc107'; 
+            if(elapsed > 6) fill.style.backgroundColor = '#dc3545'; 
+            
+        }, 50);
+    }
+
+    function processAnswer(isCorrect, userAnswer, correctAns) {
+        if(isAnswering) return;
+        isAnswering = true;
+        clearInterval(timerInterval);
+
+        let elapsed = (Date.now() - currentStartTime) / 1000;
+        let timeBonus = 0;
+        let fbDiv = document.getElementById('feedback');
+        
+        if(isCorrect) {
+            if(elapsed <= 3.0) timeBonus = 2;
+            else if (elapsed <= 6.0) timeBonus = 1;
+            
+            let roundScore = baseScore + timeBonus;
+            score += roundScore;
+            
+            fbDiv.className = "correct";
+            fbDiv.innerHTML = `✅ 答對了！+${baseScore}分 <br><small style="color:#666;">⏱️ 反應時間：${elapsed.toFixed(1)}秒 (手速加分 +${timeBonus})</small>`;
+        } else {
+            let q = selectedQuestions[currentQIndex];
+            mistakes.push(`「<span style="color:var(--accent); font-weight:bold;">${q.word}</span>」應解釋為：<b>${correctAns}</b> <br><small style="color:#888;">(出自：${q.quote})</small>`);
+            fbDiv.className = "wrong";
+            fbDiv.innerHTML = `❌ 答錯了！<br>正確答案應為：【${correctAns}】`;
+        }
+
+        document.getElementById('ui-score').innerText = `目前總分：${score}`;
+
+        setTimeout(() => {
+            currentQIndex++;
+            loadQuestion();
+        }, 2200); // 停留2.2秒讓玩家看清楚
+    }
+
+    function endGame() {
+        showScreen('screen-result');
+        let maxPossible = maxQuestions * (baseScore + 2);
+        
+        document.getElementById('final-score').innerText = `${score} / ${maxPossible} 分`;
+        
+        let rankText = "";
+        let ratio = score / maxPossible;
+        if(ratio === 1) rankText = "🌟 一代宗師！完美無瑕的國文大師！";
+        else if(ratio >= 0.8) rankText = "👍 舉一反三！對古文有極高的敏銳度！";
+        else if(ratio >= 0.5) rankText = "📚 溫故知新！基礎不錯，再接再厲！";
+        else rankText = "🐢 欲速則不達！多看幾次注釋再來挑戰吧！";
+        
+        document.getElementById('final-rank').innerText = rankText;
+
+        // 顯示錯題本
+        let mistakeDiv = document.getElementById('mistakes-log');
+        if(mistakes.length > 0) {
+            mistakeDiv.style.display = "block";
+            mistakeDiv.innerHTML = "<b style='font-size:18px;'>📝 錯題複習清單：</b><hr style='border:0; border-top:1px dashed #ccc; margin:10px 0;'><ul style='padding-left: 20px; margin-bottom:0;'>" + mistakes.map(m => `<li style="margin-bottom:8px;">${m}</li>`).join("") + "</ul>";
+        } else {
+            mistakeDiv.style.display = "none";
+        }
+    }
+</script>
+
+</body>
+</html>
